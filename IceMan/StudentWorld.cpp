@@ -37,7 +37,7 @@ void StudentWorld::de_allocate()
 
 bool StudentWorld::isIce(int X, int Y)
 {
-	if (X < w_Ice & Y < h_Ice) {
+	if (X < w_Ice && Y < h_Ice) {
 		if (I[X][Y] != nullptr) return true;
 		else return false;
 	}
