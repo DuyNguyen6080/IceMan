@@ -2,40 +2,40 @@
 #include <string>
 #include <queue>
 #include <iomanip>
+#include <algorithm>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <cmath>
+
 using namespace std;
 
-
-GameWorld* createStudentWorld(string assetDir)
-{
+GameWorld* createStudentWorld(string assetDir) {
 	return new StudentWorld(assetDir);
 }
 
-// Students:  Add code to this file (if you wish), StudentWorld.h, Actor.h and Actor.cpp
-
-
-
 StudentWorld::StudentWorld(std::string assetDir)
-	: GameWorld(assetDir)
-{
+	: GameWorld(assetDir) {
+	current_level_number = 0;
 	w_Ice = 64;
 	h_Ice = 60;
+
 	w_maze = 64;
 	h_maze = 64;
+
 	w_Game = 64;
 	h_Game = 64;
+    
 	X_Player = 30;
 	Y_Player = 60;
 	init_maze();
-
 }
 
-StudentWorld::~StudentWorld()
-{
+StudentWorld::~StudentWorld() {
 	de_allocate();
 }
 
-void StudentWorld::de_allocate()
-{
+void StudentWorld::de_allocate() {
 	delete_Ice_field(I);
 	for (auto i : All_Actor) {
 		for (auto it : i) {
@@ -44,11 +44,9 @@ void StudentWorld::de_allocate()
 		}
 		i.resize(0);
 	}
-	
 }
 
-bool StudentWorld::isIce(int X, int Y) 
-{
+bool StudentWorld::isIce(int X, int Y) {
 	if (X < w_Ice && Y < h_Ice) {
 		if (I[X][Y] != nullptr) return true;
 		else return false;
@@ -56,8 +54,7 @@ bool StudentWorld::isIce(int X, int Y)
 	else return false;
 }
 
-bool StudentWorld::is_Boulder_here(int X, int Y)
-{
+bool StudentWorld::is_Boulder_here(int X, int Y) {
 	/*if (All_Actor[3].empty())
 	{
 		cout << "vector of boulder is empty" << endl;
@@ -74,8 +71,7 @@ bool StudentWorld::is_Boulder_here(int X, int Y)
 	return false;
 }
 
-void StudentWorld::delete_Ice_field(Ice* someIce[64][60])
-{
+void StudentWorld::delete_Ice_field(Ice* someIce[64][60]) {
 	for (int col = 0; col < w_Ice; col++) {
 		for (int row = 0; row < h_Ice; row++) {
 			//std::cout << "deleting I [" << col << "][" << row << "]" << std::endl;
@@ -87,8 +83,7 @@ void StudentWorld::delete_Ice_field(Ice* someIce[64][60])
 	}
 }
 
-void StudentWorld::delete_Ice_square(int X, int Y)
-{
+void StudentWorld::delete_Ice_square(int X, int Y) {
 	//std::cout << X << " " << Y << " \n";
 	if (I[X][Y] != nullptr) {
 		delete I[X][Y];
@@ -96,29 +91,26 @@ void StudentWorld::delete_Ice_square(int X, int Y)
 	}
 }
 
-void StudentWorld::Hurt_Iceman(int howmuch)
-{
+void StudentWorld::Hurt_Iceman(int howmuch) {
 	All_Actor[0][0]->dec_health(howmuch);
 }
 
-void StudentWorld::make_Squirt(int X, int Y, GraphObject::Direction direction)
-{
+void StudentWorld::make_Squirt(int X, int Y, GraphObject::Direction D) {
+	if ((X <= w_Ice) && (X >= 0) && (Y <= h_Ice) && (Y >= 0))
+		All_Actor.push_back(new Squirt(X, Y, this, D));
+	else return;
 }
 
-void StudentWorld::init_maze()
-{
-	
+void StudentWorld::init_maze() {
 	for (int row = h_maze-1; row >= 0; row--) {
 		for (int col = 0; col < w_maze; col++) {
 			maze[col][row] = -1;
 			//cout <<maze[col][row] << endl;
 		}
 	}
-	
 }
 
-void StudentWorld::bfs_maze(int endPointX, int endPointY, int startPointX, int startPointY)
-{
+void StudentWorld::bfs_maze(int endPointX, int endPointY, int startPointX, int startPointY) {
 	init_maze();
 	
 	queue<pair<pair<int, int>, const int>> q;
@@ -217,19 +209,12 @@ void StudentWorld::bfs_maze(int endPointX, int endPointY, int startPointX, int s
 					temp.second = location_and_step.second +1;
 					q.push(temp);
 				}
-				
-				
-				
 			}
 		}
-		
 	}
-	
 }
 
-void StudentWorld::print_maze()
-{
-	
+void StudentWorld::print_maze() {
 	for (int row = h_maze - 1; row >= 0; row--) {
 		cout << setw(3) << row;
 		for (int col = 0; col < w_maze; col++) {
@@ -248,27 +233,21 @@ void StudentWorld::print_maze()
 	cout << endl << endl << endl;
 }
 
-void StudentWorld::make_Protestor_to_Quit()
-{
+void StudentWorld::make_Protestor_to_Quit() {
 	for (int i = 0; i < All_Actor[1].size(); i++) {
 		All_Actor[1][i]->dec_health(100);
 	}
-	
 }
 
-int StudentWorld::getW() const
-{
+int StudentWorld::getW() const {
 	return w_Game;
 }
 
-int StudentWorld::getH() const
-{
+int StudentWorld::getH() const {
 	return h_Game;
 }
 
-bool StudentWorld::is_Iceman_here(int X, int Y) 
-{
-	
+bool StudentWorld::is_Iceman_here(int X, int Y) {
 	int Iceman_X = All_Actor[0][0]->getX();
 	int Iceman_Y = All_Actor[0][0]->getY();
 
@@ -279,16 +258,21 @@ bool StudentWorld::is_Iceman_here(int X, int Y)
 	}
 	return false;
 }
+
 ///////////////////////////////////////////////////////    INIT   ///////////////////////////////////////////////////////
-int StudentWorld::init()
-{
+int StudentWorld::init() {
 	Ice_init();
 	init_maze();
 	num_tick_elapsed = 0;
+  srand((unsigned int)time(0));
+  
 	Probability_Of_Hardcore = max(90, int(getLevel() * 10 + 30));
 	P = min(15, 2 + int(getLevel() * 1.5));
 	T = max(25, 200 - int(getLevel()));
-	srand(time(nullptr));
+  int B = min(current_level_number / 2 + 2, 9);
+	int G = max(5 - current_level_number / 2, 2);
+	int L = min(2 + current_level_number, 21);
+	
 	int random_integer = rand() % 99 + 1;
 
 	All_Actor[0].push_back(new IceMan(30, 60, this));
@@ -307,20 +291,36 @@ int StudentWorld::init()
 	All_Actor[7].push_back(new Sonar(16, 60, this));
 	All_Actor[8].push_back(new Water(12, 60, this));
 	
-	
+	//for (int i = 0; i < B; i++) {
+		//int Bx = (rand() % 60 + 1);
+		//int By = (rand() % 36 + 20 + 1);
+		//delete_boulder_Ice(Bx, By);
+		//All_Actor.push_back(new Boulder(Bx, By, this));
+		//num_Oil = i + 1;
+		//std::cout << "Boulder created at " << Bx << " " << By << endl;
+	//}
+
+	//for (int i = 0; i < L; i++) {
+		//int Lx = (rand() % 60 + 1);
+		//int Ly = (rand() % 56 + 1);
+		//All_Actor.push_back(new Oil(Lx, Ly, this));
+		//std::cout << "Oil Barrel created at " << Lx << " " << Ly << endl;
+	//}
+
+	//All_Actor[4]->setVisible(true);
+	//for (int i = 0; i < G; i++) {
+		//int Gx = (rand() % 60 + 1);
+		//int Gy = (rand() % 56 + 1);
+		//All_Actor.push_back(new Gold(Gx, Gy, this));
+		//std::cout << "Gold Nugget created at " << Gx << " " << Gy << endl;
+	//}
 
 	
 	
 	return GWSTATUS_CONTINUE_GAME;
 }
 
-void StudentWorld::cleanUp()
-{
-	de_allocate();
-}
-
-bool StudentWorld::should_going_to(GraphObject::Direction direction, int curentX, int curentY)
-{
+bool StudentWorld::should_going_to(GraphObject::Direction direction, int curentX, int curentY) {
 	int self_value = maze[curentX][curentY];
 	cout << "current value" << maze[curentX][curentY] << endl;
 	switch (direction) {
@@ -372,10 +372,58 @@ bool StudentWorld::should_going_to(GraphObject::Direction direction, int curentX
 	}
 }
 
+void StudentWorld::delete_boulder_Ice(int x, int y) {
+		for (int i = x; i < (x + 4); i++) {
+			for (int j = y; j < (y + 4); j++) {
+				if (I[i][j] != nullptr) {
+					delete I[i][j];
+					I[i][j] = nullptr;
+				}
+			}
+		}
+}
 
+int StudentWorld::getW() const {
+	return w_Game;
+}
 
-inline int StudentWorld::move()
-{
+int StudentWorld::getH() const {
+	return h_Game;
+}
+
+double StudentWorld::how_Far_From_IceMan(int x, int y) {
+	return sqrt(pow((x - X_Player), 2) + pow((y - Y_Player), 2));
+}
+
+double StudentWorld::how_Far_From_Protestor(int x, int y) {
+	return sqrt(pow((x - X_Protest), 2) + pow((y - Y_Protest), 2));
+}
+
+int StudentWorld::set_Player_NewX(int X) {
+	return X_Player = X;
+}
+
+int StudentWorld::set_Player_NewY(int Y) {
+	return Y_Player = Y;
+}
+
+int StudentWorld::set_Protest_NewX(int X) {
+	return X_Protest = X;
+}
+
+int StudentWorld::set_Protest_NewY(int Y) {
+	return Y_Protest = Y;
+}
+
+int StudentWorld::decrease_Barrels() {
+	return num_Oil - 1;
+}
+
+void StudentWorld::increase_Score(int score) {
+
+}
+
+inline int StudentWorld::move() {
 	// This code is here merely to allow the game to build, run, and terminate after you hit enter a few times.
 	// Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
 	//All_Actor[1]->doSomething();
@@ -384,7 +432,7 @@ inline int StudentWorld::move()
 	int num_of_protestor = All_Actor[1].size() + All_Actor[2].size();
 
 	if (num_tick_elapsed > T && num_of_protestor < P) {
-		srand(time(nullptr));
+		srand((unsigned int)time(0));
 		int random_integer = rand() % 99 + 1;
 		/*if (random_integer > Probability_Of_Hardcore) {
 			All_Actor[1].push_back(new RegularProtestor(56, 60, this));
@@ -403,7 +451,29 @@ inline int StudentWorld::move()
 				return GWSTATUS_PLAYER_DIED; 
 			}
 		}
+  //auto Act = [&](Actor* it) {
+		//if (it->isAlive()) {
+			//it->doSomething();
+		//}
+	//};
 
+	//for_each(All_Actor.begin(), All_Actor.end(), Act);
+	/*for (auto it : All_Actor) {
+	* 
+		if (it->isAlive()) {
+			it->doSomething();
+		}
+
+		if (!All_Actor[0]->isAlive()) return GWSTATUS_PLAYER_DIED;
+		else return GWSTATUS_CONTINUE_GAME;
+
+	}*/
+
+	//if (!All_Actor[0]->isAlive())
+		//return GWSTATUS_PLAYER_DIED;
+	//else
+		//return GWSTATUS_CONTINUE_GAME;
+//}
 		if (!All_Actor[0][0]->isAlive()) return GWSTATUS_PLAYER_DIED;
 		//else return GWSTATUS_CONTINUE_GAME;
         
@@ -414,16 +484,15 @@ inline int StudentWorld::move()
     return  GWSTATUS_CONTINUE_GAME;
 }
 
+inline void StudentWorld::cleanUp() {
+	de_allocate();
+}
 
-
-void StudentWorld::Ice_init()
-{
+void StudentWorld::Ice_init() {
 	int tunel_X_lower_bound = 30;
 	int tunel_X_upper_bound = 33;
 	int tunel_Y_lower_bound = 4;
 	int tunel_Y_upper_bound = 59;
-
-
 
 	for (int col = 0; col < w_Ice; col++) {
 		for (int row = 0; row < h_Ice; row++) {
@@ -434,8 +503,6 @@ void StudentWorld::Ice_init()
 			if (!isTunel) {
 				I[col][row] = new Ice(col, row, this);
 			}
-			
-
 			else {
 				I[col][row] = nullptr;
 			}

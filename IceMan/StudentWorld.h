@@ -3,23 +3,21 @@
 
 #include "GameWorld.h"
 #include "GameConstants.h"
+#include "GraphObject.h"
 #include <string>
 #include <vector>
 #include "Actor.h"
 
-
-// Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 class Actor;
 class Ice;
 
-class StudentWorld : public GameWorld
-{
+class StudentWorld : public GameWorld {
 public:
 	StudentWorld(std::string assetDir);
 	~StudentWorld();
+
 	int get_w_Ice() const { return w_Ice; }
 	int get_h_Ice() const { return h_Ice; }
-
 	void de_allocate();
 	void delete_Ice_square(int X, int Y);
 	void Hurt_Iceman(int howmuch);
@@ -32,17 +30,34 @@ public:
 	int getW() const;
 	int getH() const;
 	int get_value_self_path(int X, int Y) { return maze[X][Y]; }
-
 	bool is_Iceman_here(int X, int Y)  ;
 	bool isIce(int X, int Y) ;
 	bool is_Boulder_here(int X, int Y);
 	virtual int init();
 	virtual int move();
 	virtual void cleanUp();
-	
+
 	bool should_going_to(GraphObject::Direction direction, int currentX, int curentY);
 
 private:
+	double how_Far_From_IceMan(int x, int y);
+	double how_Far_From_Protestor(int x, int y);
+	int set_Player_NewX(int X);
+	int set_Player_NewY(int y);
+	int set_Protest_NewX(int X);
+	int set_Protest_NewY(int y);
+	int decrease_Barrels();
+	void increase_Score(int score);
+
+	bool is_Iceman_here(int X, int Y);
+	bool isIce(int X, int Y);
+	bool is_Boulder_here(int X, int Y) { return false; }
+	void delete_boulder_Ice(int x, int y);
+	virtual int init();
+	virtual int move();
+	virtual void cleanUp();
+private:
+	int current_level_number;
 	int w_Game;
 	int h_Game;
 	int w_Ice;
@@ -55,12 +70,14 @@ private:
 	int T;
 	int Probability_Of_Hardcore;
 	int num_tick_elapsed;
+	int X_Protest;
+	int Y_Protest;
+	int num_Oil;
 	Ice* I[64][60];
 	int maze[64][64];
 	std::vector<Actor*> All_Actor[10];
 	void Ice_init();
 	void delete_Ice_field(Ice* someIce[64][60]);
-
 };
 
 #endif // STUDENTWORLD_H_
